@@ -29,12 +29,13 @@ object Commandes {
         return d[a.length][b.length]
     }
 
-    private fun estZouli(mot: String) = mot in MOTS_ZOULI || distance(mot, "zouli") <= 1
+    private fun estZouli(mot: String) = mot in MOTS_ZOULI || (mot.length in 3..8 && distance(mot, "zouli") <= 2)
 
     fun traiter(a: Activity, phrase: String): String {
         val mots = phrase.split(" ").filter { it.isNotEmpty() }
-        if (mots.isEmpty() || !estZouli(mots[0])) return ""
-        val cmd = mots.drop(1)
+        val deux = mots.size >= 2 && estZouli(mots[0] + mots[1])
+        if (mots.isEmpty() || !(estZouli(mots[0]) || deux)) return ""
+        val cmd = mots.drop(if (deux) 2 else 1)
         if (cmd.isEmpty()) return "Oui Kamil ?"
         return when {
             "accueil" in cmd -> { accueil(a); "D'accord Kamil." }
