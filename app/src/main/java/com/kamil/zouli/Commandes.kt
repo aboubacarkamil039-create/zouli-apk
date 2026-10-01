@@ -30,6 +30,7 @@ object Commandes {
         return d[a.length][b.length]
     }
 
+    private fun estVerbe(m: String) = m in VERBES || m.startsWith("ouvr") || m.startsWith("lanc") || m.startsWith("retourn") || m.startsWith("augment") || m.startsWith("baiss") || m.startsWith("diminu")
     private fun estZouli(mot: String) = mot in MOTS_ZOULI || (mot.length in 3..8 && distance(mot, "zouli") <= 2)
 
     fun traiter(a: Activity, phrase: String): String {
@@ -39,16 +40,16 @@ object Commandes {
         val skip = if (deux) 2 else if (estZouli(mots[0])) 1 else 0
         val cmd = mots.drop(skip)
         if (cmd.isEmpty()) return if (skip > 0) "Oui Kamil ?" else ""
-        if (skip == 0 && cmd[0] !in VERBES) return ""
+        if (skip == 0 && !estVerbe(cmd[0])) return ""
         return when {
             "accueil" in cmd -> { accueil(a); "D'accord Kamil." }
-            "volume" in cmd && cmd.any { it in setOf("augmente", "monte", "plus") } -> {
+            "volume" in cmd && cmd.any { it.startsWith("augment") || it in setOf("monte", "plus") } -> {
                 volume(a, AudioManager.ADJUST_RAISE); "D'accord Kamil."
             }
-            "volume" in cmd && cmd.any { it in setOf("baisse", "diminue", "moins") } -> {
+            "volume" in cmd && cmd.any { it.startsWith("baiss") || it.startsWith("diminu") || it == "moins" } -> {
                 volume(a, AudioManager.ADJUST_LOWER); "D'accord Kamil."
             }
-            cmd[0] in setOf("ouvre", "ouvrir", "lance", "lancer") ->
+            (cmd[0].startsWith("ouvr") || cmd[0].startsWith("lanc")) ->
                 ouvrir(a, cmd.drop(1).filter { it !in ARTICLES }.joinToString(" "))
             else -> "Je n'ai pas encore appris cette commande."
         }
