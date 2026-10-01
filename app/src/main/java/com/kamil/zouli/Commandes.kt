@@ -10,6 +10,7 @@ import java.text.Normalizer
 
 object Commandes {
     private val MOTS_ZOULI = setOf("zouli", "zoulie", "zouly", "zoli", "souli", "jouli", "zouri", "zoulis")
+    private val VERBES = setOf("ouvre", "ouvrir", "lance", "lancer", "retourne", "reviens", "augmente", "monte", "baisse", "diminue")
     private val ARTICLES = setOf("le", "la", "les", "l", "un", "une", "des", "d", "application", "appli")
 
     fun normaliser(s: String): String {
@@ -34,9 +35,11 @@ object Commandes {
     fun traiter(a: Activity, phrase: String): String {
         val mots = phrase.split(" ").filter { it.isNotEmpty() }
         val deux = mots.size >= 2 && estZouli(mots[0] + mots[1])
-        if (mots.isEmpty() || !(estZouli(mots[0]) || deux)) return ""
-        val cmd = mots.drop(if (deux) 2 else 1)
-        if (cmd.isEmpty()) return "Oui Kamil ?"
+        if (mots.isEmpty()) return ""
+        val skip = if (deux) 2 else if (estZouli(mots[0])) 1 else 0
+        val cmd = mots.drop(skip)
+        if (cmd.isEmpty()) return if (skip > 0) "Oui Kamil ?" else ""
+        if (skip == 0 && cmd[0] !in VERBES) return ""
         return when {
             "accueil" in cmd -> { accueil(a); "D'accord Kamil." }
             "volume" in cmd && cmd.any { it in setOf("augmente", "monte", "plus") } -> {

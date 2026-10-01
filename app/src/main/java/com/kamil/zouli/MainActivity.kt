@@ -65,7 +65,7 @@ class MainActivity : Activity(), RecognitionListener {
                 service = SpeechService(r, 16000.0f)
                 service?.startListening(this)
                 bouton.text = "Arrêter"
-                texte.text = "Dis : Zouli, ouvre WhatsApp"
+                texte.text = "Dis : ouvre WhatsApp"
             }
         }
 
@@ -120,7 +120,7 @@ class MainActivity : Activity(), RecognitionListener {
         if (brut.isEmpty()) return
         val rep = Commandes.traiter(this, Commandes.normaliser(brut))
         if (rep.isEmpty()) {
-            texte.text = "Entendu : $brut\n(sans « Zouli » : ignoré)"
+            texte.text = "Entendu : $brut\n(pas une commande connue)"
         } else {
             texte.text = "Toi : $brut"
             dire(rep)
