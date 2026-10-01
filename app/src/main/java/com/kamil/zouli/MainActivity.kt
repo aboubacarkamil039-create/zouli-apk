@@ -4,6 +4,8 @@ import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -14,12 +16,15 @@ import org.vosk.Recognizer
 import org.vosk.android.RecognitionListener
 import org.vosk.android.SpeechService
 import org.vosk.android.StorageService
+import java.util.Locale
 
 class MainActivity : Activity(), RecognitionListener {
     private lateinit var texte: TextView
     private lateinit var bouton: Button
     private var model: Model? = null
     private var service: SpeechService? = null
+    private var tts: TextToSpeech? = null
+    private var ttsPret = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +42,19 @@ class MainActivity : Activity(), RecognitionListener {
         layout.addView(texte)
         setContentView(layout)
 
+        tts = TextToSpeech(this) { statut ->
+            if (statut == TextToSpeech.SUCCESS) {
+                val r = tts?.setLanguage(Locale.FRANCE)
+                ttsPret = r != TextToSpeech.LANG_MISSING_DATA &&
+                        r != TextToSpeech.LANG_NOT_SUPPORTED
+                tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(id: String?) {}
+                    override fun onDone(id: String?) { runOnUiThread { service?.setPause(false) } }
+                    override fun onError(id: String?) { runOnUiThread { service?.setPause(false) } }
+                })
+            }
+        }
+
         bouton.setOnClickListener {
             if (service != null) {
                 service?.stop()
@@ -47,7 +65,7 @@ class MainActivity : Activity(), RecognitionListener {
                 service = SpeechService(r, 16000.0f)
                 service?.startListening(this)
                 bouton.text = "Arrêter"
-                texte.text = "Je t'écoute…"
+                texte.text = "Dis : Zouli, ouvre WhatsApp"
             }
         }
 
@@ -82,14 +100,33 @@ class MainActivity : Activity(), RecognitionListener {
             { e -> texte.text = "Erreur modèle : ${e.message}" })
     }
 
+    private fun dire(msg: String) {
+        texte.append("\n\nZouli : $msg")
+        if (ttsPret) {
+            service?.setPause(true)
+            tts?.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "zouli")
+        } else {
+            texte.append("\n(voix française non installée)")
+        }
+    }
+
     override fun onPartialResult(h: String?) {
         val p = JSONObject(h ?: "{}").optString("partial")
         if (p.isNotEmpty()) texte.text = p
     }
+
     override fun onResult(h: String?) {
-        val t = JSONObject(h ?: "{}").optString("text")
-        if (t.isNotEmpty()) texte.text = t
+        val brut = JSONObject(h ?: "{}").optString("text")
+        if (brut.isEmpty()) return
+        val rep = Commandes.traiter(this, Commandes.normaliser(brut))
+        if (rep.isEmpty()) {
+            texte.text = "Entendu : $brut\n(sans « Zouli » : ignoré)"
+        } else {
+            texte.text = "Toi : $brut"
+            dire(rep)
+        }
     }
+
     override fun onFinalResult(h: String?) {}
     override fun onError(e: Exception?) { texte.text = "Erreur : ${e?.message}" }
     override fun onTimeout() {}
@@ -97,5 +134,6 @@ class MainActivity : Activity(), RecognitionListener {
     override fun onDestroy() {
         super.onDestroy()
         service?.shutdown()
+        tts?.shutdown()
     }
 }
