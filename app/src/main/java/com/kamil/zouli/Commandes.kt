@@ -31,6 +31,7 @@ object Commandes {
     }
 
     private fun estVerbe(m: String) = m in VERBES || m.startsWith("ouvr") || m.startsWith("lanc") || m.startsWith("retourn") || m.startsWith("augment") || m.startsWith("baiss") || m.startsWith("diminu")
+    private fun estVerbe(m: String) = m in VERBES || m.startsWith("ouvr") || m.startsWith("lanc") || m.startsWith("retourn") || m.startsWith("augment") || m.startsWith("baiss") || m.startsWith("diminu")
     private fun estZouli(mot: String) = mot in MOTS_ZOULI || (mot.length in 3..8 && distance(mot, "zouli") <= 2)
 
     fun traiter(a: Activity, phrase: String): String {
