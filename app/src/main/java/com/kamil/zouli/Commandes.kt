@@ -38,8 +38,7 @@ object Commandes {
         val deux = mots.size >= 2 && estZouli(mots[0] + mots[1])
         if (mots.isEmpty()) return ""
         val skip = if (deux) 2 else if (estZouli(mots[0])) 1 else 0
-        val cmd = mots.drop(skip).toMutableList()
-        if (cmd.isNotEmpty() && cmd[0] in setOf("verre", "vert", "ouvert", "vers", "ouvrent", "ouvrez")) cmd[0] = "ouvre"
+        val cmd = mots.drop(skip)
         if (cmd.isEmpty()) return if (skip > 0) "Oui Kamil ?" else ""
         if (skip == 0 && !estVerbe(cmd[0])) return ""
         return when {

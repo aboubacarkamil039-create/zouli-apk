@@ -61,7 +61,7 @@ class MainActivity : Activity(), RecognitionListener {
                 service = null
                 bouton.text = "Écouter"
             } else {
-                val r = Recognizer(model, 16000.0f)
+                val r = Recognizer(model, 16000.0f, Grammaire.json)
                 service = SpeechService(r, 16000.0f)
                 service?.startListening(this)
                 bouton.text = "Arrêter"
@@ -116,7 +116,7 @@ class MainActivity : Activity(), RecognitionListener {
     }
 
     override fun onResult(h: String?) {
-        val brut = JSONObject(h ?: "{}").optString("text")
+        val brut = JSONObject(h ?: "{}").optString("text").replace("[unk]", "").trim()
         if (brut.isEmpty()) return
         val rep = Commandes.traiter(this, Commandes.normaliser(brut))
         if (rep.isEmpty()) {
